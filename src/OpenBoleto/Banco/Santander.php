@@ -104,7 +104,14 @@ class Santander extends BoletoAbstract
      */
     protected function gerarNossoNumero()
     {
-        return self::zeroFill($this->getSequencial(), 13);
+        $sequencial = $this->getSequencial();
+
+        // As 15 próximas posições no nosso número são a critério do beneficiário, utilizando o sequencial
+        // Depois, calcula-se o código verificador por módulo 11
+        $modulo = self::modulo11(self::zeroFill($sequencial, 12));
+        $numero = self::zeroFill($sequencial, 12) . '-' . $modulo['digito'];
+
+        return $numero;
     }
 
     /**
@@ -119,6 +126,24 @@ class Santander extends BoletoAbstract
             $this->getNossoNumero() .
             self::zeroFill($this->getIos(), 1) .
             self::zeroFill($this->getCarteira(), 3);
+    }
+
+    /**
+     * Gera o Digito da Conta Cedente.
+     *
+     * @throws Exception
+     * @return integer
+     */
+    public function gerarContaDv()
+    {
+        $conta  = $this->getConta();
+        $modulo = self::modulo11($conta);
+        $resto  = $modulo['resto'];
+        $digito = 11 - $resto;
+
+        if ($digito == 10 || $digito == 11) $digito = 0;
+
+        return $digito;
     }
 
     /**
